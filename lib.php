@@ -58,3 +58,38 @@ function local_mymedia_extend_navigation($navigation) {
     $nodemymedia = $nodehome->add($mymedia, new moodle_url('/local/mymedia/mymedia.php'), navigation_node::NODETYPE_LEAF, $mymedia, 'mymedia', $icon);
     $nodemymedia->showinflatnavigation = true;
 }
+
+/**
+ * Extend Settings block adding MyMedia link at the end.
+ *
+ * @param object $navigation global_navigation
+ * @param context $context element context
+ * @return void
+ */
+function local_mymedia_extend_settings_navigation(settings_navigation $navigation, context $context) {
+    global $USER, $DB, $PAGE;
+
+    if (empty($USER->id)) {
+        return;
+    }
+
+    // When on the admin-index page, first check if the capability exists.
+    // This is to cover the edge case on the Plugins check page, where a check for the capability is performed before the capability has been added to the Moodle mdl_capabilities
+    // table.
+    if ('admin-index' === $PAGE->pagetype) {
+        $exists = $DB->record_exists('capabilities', array('name' => 'local/mymedia:view'));
+
+        if (!$exists) {
+            return;
+        }
+    }
+
+    $context = context_user::instance($USER->id);
+
+    if (!has_capability('local/mymedia:view', $context, $USER)) {
+        return;
+    }
+    $mymedia = get_string('nav_mymedia', 'local_mymedia');
+    $icon = new pix_icon('my-media', '', 'local_mymedia');
+    $nodemymedia = $navigation->add($mymedia, new moodle_url('/local/mymedia/mymedia.php'), navigation_node::NODETYPE_LEAF, $mymedia, 'mymedia', $icon);
+}
